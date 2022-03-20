@@ -6,24 +6,26 @@ import useAudioPlay from "./hooks/useAudioPlay";
 type AudioList = [string, string][][];
 
 function App() {
-  const { handlers, play, stop } = useAudioPlay({
+  const { handlers, play } = useAudioPlay({
     defaultAudioPath: "silent.wav",
     onPlayEnd: () => setPlayingIndex((index) => index + 1),
   });
-  const [playingIndex, setPlayingIndex] = useState(-1);
+  const [playing, setPlaying] = useState(false);
+  const [playingIndex, setPlayingIndex] = useState(0);
   const [queue, setQueue] = useState<[string, string][]>([]);
 
   useEffect(() => {
-    if (playingIndex >= 0) {
+    if (playing) {
       const head = queue[playingIndex];
       if (head == null) {
-        setPlayingIndex(-1);
+        setPlaying(false);
+        setPlayingIndex(0);
       } else {
         const [_, path] = head;
         play(path);
       }
     }
-  }, [play, playingIndex, queue]);
+  }, [play, playing, playingIndex, queue]);
 
   return (
     <div className="App" {...handlers}>
@@ -44,14 +46,16 @@ function App() {
           <div className="audio-list-wrap" key={`gr-${index}`}>
             <div className="label-title">{groups[0][0]}</div>
             <ul className="audio-list">
-              {groups.map(([label, path], index) => (
+              {groups.map(([label, path]) => (
                 <li key={`${label}`}>
                   <AudioButton
                     label={label}
                     path={path}
-                    onClick={() =>
-                      setQueue((state) => [...state, [label, path]])
-                    }
+                    onClick={() => {
+                      setPlaying(false);
+                      setPlayingIndex(0);
+                      setQueue((state) => [...state, [label, path]]);
+                    }}
                   />
                 </li>
               ))}
@@ -70,7 +74,9 @@ function App() {
           <div className="queue-list">
             {queue.map(([label], index) => (
               <span
-                className={`label ${playingIndex === index ? "playing" : ""}`}
+                className={`label ${
+                  playing && playingIndex === index ? "playing" : ""
+                }`}
                 key={`${label}${index}`}
               >
                 {label}
@@ -84,13 +90,16 @@ function App() {
           </button>
           <button
             className="controll-button"
-            onClick={async () => await stop()}
+            onClick={async () => {
+              setPlaying(false);
+              setPlayingIndex(0);
+            }}
           >
             Stop
           </button>
           <button
             className="controll-button play"
-            onClick={() => setPlayingIndex(0)}
+            onClick={() => setPlaying(true)}
           >
             Play
           </button>
