@@ -8,6 +8,7 @@ export default function useAudioPlay({
   onPlayEnd?: () => Promise<void> | void;
 }) {
   const [firstPlay, setFirstPlay] = useState(false);
+  const stopped = useRef(false);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>();
   const onPlayEndCallback = useCallback(
@@ -19,10 +20,13 @@ export default function useAudioPlay({
     const className = "use-audio-play-element";
     const audio = document.createElement("audio");
     audio.className = className;
-    audio.volume = 0.5;
+    audio.volume = 0.75;
     audio.muted = true;
     audio.loop = false;
     audio.src = defaultAudioPath;
+    audio.onpause = () => {
+      console.log("pause");
+    };
     document.body.appendChild(audio);
 
     audioRef.current = audio;
@@ -59,7 +63,10 @@ export default function useAudioPlay({
       audio.onended = async () => {
         audio.onended = null;
         audio.oncanplay = null;
-        await onPlayEndCallback();
+        if (!stopped.current) {
+          await onPlayEndCallback();
+        }
+        stopped.current = false;
         setPlaying(false);
       };
       audio.src = filePath;
@@ -80,9 +87,9 @@ export default function useAudioPlay({
       if (!audio) {
         return;
       }
-      audio.muted = true;
       audio.pause();
       audio.currentTime = 0;
+      stopped.current = true;
     });
   }, [playing]);
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.scss";
 import AudioButton from "./AudioButton";
 import useAudioPlay from "./hooks/useAudioPlay";
@@ -6,34 +6,45 @@ import useAudioPlay from "./hooks/useAudioPlay";
 type AudioList = [string, string][][];
 
 function App() {
-  const { handlers, play } = useAudioPlay({
+  const { handlers, play, stop } = useAudioPlay({
     defaultAudioPath: "silent.wav",
-    onPlayEnd: () => shiftQueue(),
+    onPlayEnd: () => setPlayingIndex((index) => index + 1),
   });
-  const [playingIndex, setPlayingIndex] = useState(0);
+  const [playingIndex, setPlayingIndex] = useState(-1);
   const [queue, setQueue] = useState<[string, string][]>([]);
-  const shiftQueue = async () => {
-    console.log(playingIndex);
-    const head = queue[playingIndex];
-    if (head == null) {
-      setPlayingIndex(0);
-      setQueue([]);
-      return;
+
+  useEffect(() => {
+    if (playingIndex >= 0) {
+      const head = queue[playingIndex];
+      if (head == null) {
+        setPlayingIndex(-1);
+      } else {
+        const [_, path] = head;
+        play(path);
+      }
     }
-    setPlayingIndex((index) => index + 1);
-    const [_, path] = head;
-    await play(path);
-  };
+  }, [play, playingIndex, queue]);
 
   return (
     <div className="App" {...handlers}>
-      <div>aaa</div>
+      <div className="page-title">
+        <span className="title">
+          ロベルタ
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ボイスシミュレーター
+        </span>
+        <span className="sub-title mobile-none">
+          Roberta
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;voice simulator
+        </span>
+      </div>
       <div className="audio-lists">
         {audios.map((groups, index) => (
           <div className="audio-list-wrap" key={`gr-${index}`}>
             <div className="label-title">{groups[0][0]}</div>
             <ul className="audio-list">
-              {groups.map(([label, path]) => (
+              {groups.map(([label, path], index) => (
                 <li key={`${label}`}>
                   <AudioButton
                     label={label}
@@ -48,17 +59,42 @@ function App() {
           </div>
         ))}
       </div>
-      <div>bbbb</div>
-      <div className="queue">
-        {queue.map(([label], index) => (
-          <span className="label" key={`${label}${index}`}>
-            {label}
-          </span>
-        ))}
+      <div className="links mobile-none">
+        {/* <span className="title">リンク集</span> */}
       </div>
-      <div>ccc</div>
-      <div className="controller">
-        <button onClick={shiftQueue}>play</button>
+      <div className="queue">
+        <div className="queue-list-wrap">
+          <div className="queue-title mobile-none">
+            <span className="title">再生リスト</span>
+          </div>
+          <div className="queue-list">
+            {queue.map(([label], index) => (
+              <span
+                className={`label ${playingIndex === index ? "playing" : ""}`}
+                key={`${label}${index}`}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="controller">
+          <button className="controll-button" onClick={() => setQueue([])}>
+            Clear
+          </button>
+          <button
+            className="controll-button"
+            onClick={async () => await stop()}
+          >
+            Stop
+          </button>
+          <button
+            className="controll-button play"
+            onClick={() => setPlayingIndex(0)}
+          >
+            Play
+          </button>
+        </div>
       </div>
     </div>
   );
