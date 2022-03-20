@@ -7,7 +7,7 @@ export default function useAudioPlay({
   defaultAudioPath: string;
   onPlayEnd?: () => Promise<void> | void;
 }) {
-  const [firstPlay, setFirstPlay] = useState(false);
+  const [firstPlay, setFirstPlay] = useState(true);
   const stopped = useRef(false);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>();
